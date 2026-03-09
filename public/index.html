@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Memory Cockpit</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0a0e1a">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="eyebrow">System Monitor</div>
+        <h1>🖥️ 系统监控</h1>
+      </div>
+      <button id="refreshBtn" class="ghost-btn">↻ 刷新</button>
+    </header>
+
+    <section class="status-row">
+      <div class="pill" id="generatedAt">加载中...</div>
+      <div class="pill" id="projectCountPill">0 个项目</div>
+    </section>
+
+    <section class="hero-grid" id="overviewCards"></section>
+
+    <section class="quick-links" id="quickLinks"></section>
+
+    <section class="search-panel">
+      <input id="searchInput" type="search" placeholder="🔍 搜索项目、记忆、主题...">
+      <div class="filter-row" id="filterRow" style="display: none;">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="active">活跃</button>
+        <button class="filter-btn" data-filter="validating">验证中</button>
+        <button class="filter-btn" data-filter="designing">设计中</button>
+        <button class="filter-btn" data-filter="ready">就绪</button>
+      </div>
+    </section>
+
+    <nav class="tabbar">
+      <button class="tab active" data-tab="dashboard">仪表盘</button>
+      <button class="tab" data-tab="chat">聊天</button>
+      <button class="tab" data-tab="permissions">权限</button>
+      <button class="tab" data-tab="projects">项目</button>
+      <button class="tab" data-tab="system">系统</button>
+      <button class="tab" data-tab="more">更多 ▾</button>
+    </nav>
+
+    <main>
+      <!-- Dashboard Tab -->
+      <section class="panel active" id="tab-dashboard">
+        <div class="section-header">
+          <h2>系统概览</h2>
+        </div>
+        <div id="dashboardCards" class="card-list two-col"></div>
+      </section>
+
+      <!-- Chat Tab -->
+      <section class="panel" id="tab-chat">
+        <div class="section-header">
+          <h2>OpenClaw 对话</h2>
+          <button class="ghost-btn" id="newChatBtn">+ 新对话</button>
+        </div>
+        <div id="chatList" class="card-list"></div>
+        <div id="chatDetail" style="display: none;">
+          <div class="section-header">
+            <button class="ghost-btn" id="backToChatList">← 返回</button>
+            <span id="chatSessionId"></span>
+          </div>
+          <div id="chatMessages" class="chat-messages"></div>
+          <div class="chat-input-area">
+            <textarea id="chatInput" placeholder="输入消息..." rows="3"></textarea>
+            <button id="sendMessageBtn" class="primary-btn">发送</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Permissions Tab -->
+      <section class="panel" id="tab-permissions">
+        <div class="section-header">
+          <h2>权限审批</h2>
+          <button class="ghost-btn" id="refreshPermissionsBtn">↻ 刷新</button>
+        </div>
+        <div id="permissionsList" class="card-list"></div>
+      </section>
+
+      <!-- Projects Tab -->
+      <section class="panel" id="tab-projects">
+        <div class="section-header">
+          <h2>项目与主题</h2>
+          <span id="projectCount"></span>
+        </div>
+        <div id="projectsList" class="card-list two-col"></div>
+        <div id="projectDetail"></div>
+        <div id="actionResult"></div>
+      </section>
+
+      <!-- Timeline Tab -->
+      <section class="panel" id="tab-timeline">
+        <div class="section-header">
+          <h2>项目时间线</h2>
+          <span id="timelineSummary"></span>
+        </div>
+        <div id="timelineList" class="card-list"></div>
+      </section>
+
+      <!-- Alerts Tab -->
+      <section class="panel" id="tab-alerts">
+        <div class="section-header">
+          <h2>告警中心</h2>
+          <span id="alertSummary"></span>
+        </div>
+        <div id="alertList" class="card-list"></div>
+      </section>
+
+      <!-- System Tab -->
+      <section class="panel" id="tab-system">
+        <div class="section-header">
+          <h2>系统监控</h2>
+          <span id="systemSummary"></span>
+        </div>
+        <div id="systemList" class="card-list"></div>
+      </section>
+
+      <!-- More Tab -->
+      <section class="panel" id="tab-more">
+        <div class="section-header">
+          <h2>更多功能</h2>
+        </div>
+        <div class="card-list">
+          <div class="item-card" style="cursor: pointer;" data-subtab="share">
+            <h3>📤 分享历史</h3>
+            <p class="excerpt muted">查看从其他应用分享的内容</p>
+          </div>
+          <div class="item-card" style="cursor: pointer;" data-subtab="commands">
+            <h3>⚡ 快捷命令</h3>
+            <p class="excerpt muted">执行预定义的系统命令</p>
+          </div>
+          <div class="item-card" style="cursor: pointer;" data-subtab="memories">
+            <h3>📚 结构化记忆</h3>
+            <p class="excerpt muted">查看所有 OpenViking 记忆条目</p>
+          </div>
+          <div class="item-card" style="cursor: pointer;" data-subtab="activity">
+            <h3>📋 操作历史</h3>
+            <p class="excerpt muted">查看最近的续接操作记录</p>
+          </div>
+          <div class="item-card" style="cursor: pointer;" data-subtab="evidence">
+            <h3>📄 文档索引</h3>
+            <p class="excerpt muted">查看项目证据和文档链接</p>
+          </div>
+          <div class="item-card" style="cursor: pointer;" data-subtab="daily">
+            <h3>📅 日志归档</h3>
+            <p class="excerpt muted">查看近期的日志文件</p>
+          </div>
+          <div class="item-card" style="cursor: pointer;" data-subtab="workspace">
+            <h3>⚙️ 配置文件</h3>
+            <p class="excerpt muted">查看上下文文件大小</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sub-panels for "More" -->
+      <section class="panel" id="tab-share">
+        <div class="section-header">
+          <h2>📤 分享历史</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="shareList" class="card-list"></div>
+      </section>
+
+      <section class="panel" id="tab-commands">
+        <div class="section-header">
+          <h2>⚡ 快捷命令</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="commandsList" class="card-list"></div>
+        <div id="commandResult" style="display: none;">
+          <div class="item-card">
+            <h3 id="commandResultTitle"></h3>
+            <pre id="commandResultOutput" style="white-space: pre-wrap; font-size: 12px;"></pre>
+            <button class="ghost-btn" onclick="document.getElementById('commandResult').style.display='none'">关闭</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sub-panels for "More" -->
+      <section class="panel" id="tab-memories">
+        <div class="section-header">
+          <h2>📚 结构化记忆</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="memoryList" class="card-list"></div>
+      </section>
+
+      <section class="panel" id="tab-activity">
+        <div class="section-header">
+          <h2>📋 操作历史</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="activityList" class="card-list"></div>
+      </section>
+
+      <section class="panel" id="tab-evidence">
+        <div class="section-header">
+          <h2>📄 文档索引</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="evidenceList" class="card-list"></div>
+      </section>
+
+      <section class="panel" id="tab-daily">
+        <div class="section-header">
+          <h2>📅 日志归档</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="dailyList" class="card-list"></div>
+      </section>
+
+      <section class="panel" id="tab-workspace">
+        <div class="section-header">
+          <h2>⚙️ 配置文件</h2>
+          <button class="ghost-btn" onclick="setActiveTab('more')">← 返回</button>
+        </div>
+        <div id="workspaceList" class="card-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

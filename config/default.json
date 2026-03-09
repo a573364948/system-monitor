@@ -1,0 +1,32 @@
+{
+  "server": {
+    "port": 18489,
+    "host": "0.0.0.0"
+  },
+  "security": {
+    "apiTokenRequired": false,
+    "apiToken": ""
+  },
+  "features": {
+    "enableDockerMonitor": false,
+    "enableProjectManager": true,
+    "enableCommandExecutor": true,
+    "enableOpenClawChat": true,
+    "enablePermissionManager": true,
+    "enableShareHandler": true
+  },
+  "openviking": {
+    "enabled": true,
+    "memoryPath": "/home/deck/.openviking/data/viking/default/user/default/memories"
+  },
+  "openclaw": {
+    "enabled": true,
+    "agentsPath": "/home/deck/.openclaw/agents",
+    "defaultAgent": "main"
+  },
+  "share": {
+    "maxFileSize": 10485760,
+    "uploadPath": "/home/deck/.openclaw/workspace/apps/memory-cockpit/data/uploads",
+    "historyLimit": 100
+  }
+}

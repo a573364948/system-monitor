@@ -1,0 +1,130 @@
+{
+  "OpenClaw": {
+    "status": "活跃优化中",
+    "summary": "正在围绕模型路由、记忆模式、综合驾驶舱和系统稳定性持续优化。",
+    "nextActions": [
+      "继续完善综合驾驶舱与聊天联动",
+      "继续优化上下文与记忆调用链路",
+      "继续核查模型路由和性能瓶颈"
+    ],
+    "chatEntrances": [
+      "继续OpenClaw相关工作",
+      "查看OpenClaw当前状态",
+      "继续优化记忆和上下文"
+    ],
+    "evidence": [
+      "/home/deck/.openclaw/workspace/memory/2026-03-07.md",
+      "/home/deck/.openclaw/workspace/reports/model-health/latest.json",
+      "/home/deck/.openclaw/workspace/apps/memory-cockpit/README.md"
+    ],
+    "links": [
+      "https://docs.openclaw.ai",
+      "https://github.com/openclaw/openclaw"
+    ]
+  },
+  "GLKVM": {
+    "status": "高频验证中",
+    "summary": "已完成多轮桌面和浏览器实测，当前适合继续沉淀热区、流程与证据链。",
+    "nextActions": [
+      "继续优化桌面/浏览器点击命中率",
+      "继续完善浏览器扩展安装与联动流程",
+      "继续把验证结果固化进技能资料"
+    ],
+    "chatEntrances": [
+      "继续GLKVM相关工作",
+      "查看GLKVM最新验证结果",
+      "继续做GLKVM浏览器测试"
+    ],
+    "evidence": [
+      "/home/deck/.openclaw/workspace/reports/GLKVM_WINDOW_DETECTION_TEST_2026-03-07.md",
+      "/home/deck/.openclaw/workspace/reports/GLKVM_BROWSER_TOP_CONTROLS_TEST_2026-03-07.md",
+      "/home/deck/.openclaw/workspace/reports/GLKVM_SMALL_TARGETS_TEST_2026-03-07.md"
+    ],
+    "links": [
+      "/home/deck/.openclaw/workspace/GLKVM_API_CATALOG.md"
+    ]
+  },
+  "列车长": {
+    "status": "长期通用架构设计中",
+    "summary": "列车长相关工作已经从阶段性蓝图推进到长期通用架构设计，当前按 Discord 方案固化长期职能分工、频道职责和模型角色。",
+    "nextActions": [
+      "确认长期通用角色分工表是否符合长期管理场景",
+      "确认频道绑定图是否足够覆盖长期工作类型",
+      "确认模型配置表后再做 agent 落地"
+    ],
+    "chatEntrances": [
+      "继续列车长相关工作",
+      "查看列车长项目当前进展",
+      "继续梳理列车长方案"
+    ],
+    "evidence": [
+      "/home/deck/.openclaw/workspace/plans/train-conductor-role-matrix.md",
+      "/home/deck/.openclaw/workspace/plans/train-conductor-channel-binding.md",
+      "/home/deck/.openclaw/workspace/plans/train-conductor-agent-model-config.md",
+      "/home/deck/.openclaw/workspace/train-conductor-architecture-analysis.md",
+      "/home/deck/.openclaw/workspace/memory/2026-03-07.md"
+    ],
+    "links": []
+  },
+  "日报": {
+    "status": "持续优化中",
+    "summary": "多源情报抓取和飞书输出已经跑通，当前在持续优化表达样式与结构。",
+    "nextActions": [
+      "继续优化导语和结构化呈现",
+      "继续提升精选质量",
+      "继续沉淀高频信息主题"
+    ],
+    "chatEntrances": [
+      "继续日报相关工作",
+      "查看日报系统当前进展",
+      "继续优化daily-digest"
+    ],
+    "evidence": [
+      "/home/deck/.openclaw/workspace/scripts/daily-digest.js",
+      "/home/deck/.openclaw/workspace/memory/2026-03-07.md"
+    ],
+    "links": []
+  },
+  "Discord": {
+    "status": "链路可用",
+    "summary": "Discord 登录和代理链路已验证可用，后续重点是聊天联动与项目驱动式入口。",
+    "nextActions": [
+      "继续做项目入口联动",
+      "继续补送达与操作反馈验证",
+      "继续服务工作群场景"
+    ],
+    "chatEntrances": [
+      "继续Discord相关工作",
+      "查看Discord链路状态",
+      "继续列车长工作群方案"
+    ],
+    "evidence": [
+      "/home/deck/.openclaw/workspace/DISCORD_INTEGRATION_GUIDE.md",
+      "/home/deck/.openclaw/workspace/DISCORD_ATTACHMENT_GUIDE.md"
+    ],
+    "links": []
+  },
+  "OpenViking": {
+    "status": "已提速待继续调度优化",
+    "summary": "抽取模型已切到 GPT-5.4，性能显著改善，下一步是优化记忆调度与展示。",
+    "nextActions": [
+      "继续优化记忆调用层规则",
+      "继续分层展示长期记忆",
+      "继续完善主题权重策略"
+    ],
+    "chatEntrances": [
+      "继续OpenViking相关工作",
+      "查看记忆系统当前状态",
+      "继续优化记忆模式"
+    ],
+    "evidence": [
+      "/home/deck/.openclaw/workspace/OPENVIKING_GUIDE.md",
+      "/home/deck/.openclaw/workspace/OPENVIKING_QUICKREF.md",
+      "/home/deck/.openclaw/workspace/memory/openviking-config-analysis.md"
+    ],
+    "links": [
+      "https://github.com/volcengine/openviking",
+      "https://openviking.ai"
+    ]
+  }
+}

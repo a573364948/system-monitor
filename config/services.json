@@ -1,0 +1,24 @@
+{
+  "services": [
+    {
+      "unit": "openclaw-gateway.service",
+      "label": "OpenClaw Gateway",
+      "description": "OpenClaw 网关服务"
+    },
+    {
+      "unit": "openviking.service",
+      "label": "OpenViking",
+      "description": "OpenViking 记忆服务"
+    },
+    {
+      "unit": "openviking-watchdog.timer",
+      "label": "OpenViking Watchdog",
+      "description": "OpenViking 看门狗定时器"
+    },
+    {
+      "unit": "system-monitor.service",
+      "label": "System Monitor",
+      "description": "系统监控服务"
+    }
+  ]
+}

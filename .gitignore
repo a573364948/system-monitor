@@ -1,0 +1,49 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Capacitor
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+ios/
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+/tmp/
+
+# Data
+data/uploads/
+data/share-history.jsonl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+test-*.png
+/tmp/
+
+# Build
+dist/
+build/
+apk-output/
