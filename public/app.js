@@ -650,7 +650,7 @@ function setActiveTab(tabName) {
 
   // Load data for specific tabs
   if (tabName === 'dashboard' && dashboard) {
-    renderDashboard(dashboard);
+    renderDashboard(dashboard).catch(err => console.error('Dashboard render error:', err));
   } else if (tabName === 'chat') {
     loadChatList();
   } else if (tabName === 'permissions') {
@@ -670,11 +670,19 @@ async function fetchDashboard() {
     if (!dashboard) {
       showSkeleton();
     }
-    
+
     const res = await fetch('/api/dashboard', { cache: 'no-store' });
     dashboard = await res.json();
-    renderOverview(dashboard);
-    renderQuickLinks(dashboard);
+
+    // Render dashboard if on dashboard tab
+    if (document.querySelector('#tab-dashboard.active')) {
+      await renderDashboard(dashboard);
+    } else {
+      // Otherwise render old views for projects tab
+      renderOverview(dashboard);
+      renderQuickLinks(dashboard);
+    }
+
     render();
   } catch (error) {
     console.error('Failed to fetch dashboard:', error);
@@ -974,31 +982,173 @@ async function executeCommand(commandId) {
 }
 
 // ===== Dashboard Functions =====
-function renderDashboard(data) {
+async function renderDashboard(data) {
   const cards = $('#dashboardCards');
   const system = data.system || {};
+  const overview = data.overview || {};
+
+  // Get real-time data
+  const chatList = await fetch('/api/chat/conversations').then(r => r.json()).catch(() => ({ conversations: [] }));
+  const permissions = await fetch('/api/chat/pending-permissions').then(r => r.json()).catch(() => ({ permissions: [] }));
+  const commands = await fetch('/api/control/commands').then(r => r.json()).catch(() => ({ commands: [] }));
+
+  const recentChats = chatList.conversations?.slice(0, 3) || [];
+  const pendingCount = permissions.permissions?.length || 0;
+  const quickCommands = commands.commands?.slice(0, 4) || [];
 
   cards.innerHTML = `
-    <div class="item-card">
-      <h3>💻 系统资源</h3>
-      <p>CPU: ${system.cpuUsage || 'N/A'}%</p>
-      <p>内存: ${system.memoryUsage || 'N/A'}%</p>
-      <p>负载: ${system.loadAverage ? system.loadAverage.join(', ') : 'N/A'}</p>
+    <!-- System Resources Card -->
+    <div class="dashboard-card resource-card">
+      <div class="card-header">
+        <h3>💻 系统资源</h3>
+        <span class="refresh-indicator">●</span>
+      </div>
+      <div class="resource-item">
+        <div class="resource-label">
+          <span>CPU</span>
+          <span class="resource-value">${system.cpuUsage || 0}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${system.cpuUsage || 0}%"></div>
+        </div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-label">
+          <span>内存</span>
+          <span class="resource-value">${system.memoryUsage || 0}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${system.memoryUsage || 0}%"></div>
+        </div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-label">
+          <span>磁盘</span>
+          <span class="resource-value">${system.diskUsage || 0}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${system.diskUsage || 0}%"></div>
+        </div>
+      </div>
+      <div class="resource-stats">
+        <span>负载: ${system.loadAverage ? system.loadAverage.slice(0, 3).join(' / ') : 'N/A'}</span>
+        <span>运行时间: ${system.uptime ? formatUptime(system.uptime) : 'N/A'}</span>
+      </div>
     </div>
-    <div class="item-card">
-      <h3>📊 项目统计</h3>
-      <p>总项目: ${data.overview?.totalProjects || 0}</p>
-      <p>总记忆: ${data.overview?.totalMemories || 0}</p>
+
+    <!-- Quick Actions Card -->
+    <div class="dashboard-card actions-card">
+      <div class="card-header">
+        <h3>⚡ 快捷操作</h3>
+      </div>
+      <div class="quick-actions">
+        <button class="action-btn" onclick="setActiveTab('chat'); createNewChat();">
+          <span class="action-icon">💬</span>
+          <span class="action-label">新建对话</span>
+        </button>
+        <button class="action-btn" onclick="setActiveTab('permissions');">
+          <span class="action-icon">✅</span>
+          <span class="action-label">权限审批</span>
+          ${pendingCount > 0 ? `<span class="badge">${pendingCount}</span>` : ''}
+        </button>
+        <button class="action-btn" onclick="setActiveTab('commands');">
+          <span class="action-icon">⚡</span>
+          <span class="action-label">执行命令</span>
+        </button>
+        <button class="action-btn" onclick="setActiveTab('system');">
+          <span class="action-icon">📊</span>
+          <span class="action-label">系统监控</span>
+        </button>
+      </div>
     </div>
-    <div class="item-card">
-      <h3>🔧 服务状态</h3>
-      ${(system.services || []).map(s => `<p>${s.label}: ${s.status}</p>`).join('')}
+
+    <!-- Recent Chats Card -->
+    <div class="dashboard-card chats-card">
+      <div class="card-header">
+        <h3>💬 最近对话</h3>
+        <button class="ghost-btn-small" onclick="setActiveTab('chat')">查看全部 →</button>
+      </div>
+      ${recentChats.length > 0 ? `
+        <div class="recent-list">
+          ${recentChats.map(chat => `
+            <div class="recent-item" onclick="setActiveTab('chat'); openChat('${escapeHtml(chat.sessionId)}', '${escapeHtml(chat.agentId)}');">
+              <div class="recent-title">${escapeHtml(chat.sessionId)}</div>
+              <div class="recent-meta">${fmtDate(chat.updatedAt)}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<p class="empty-message">暂无对话</p>'}
     </div>
-    <div class="item-card">
-      <h3>🌐 网络</h3>
-      ${(system.lan || []).map(n => `<p>${n.name}: ${n.address}</p>`).join('')}
+
+    <!-- Services Status Card -->
+    <div class="dashboard-card services-card">
+      <div class="card-header">
+        <h3>🔧 服务状态</h3>
+      </div>
+      ${system.services && system.services.length > 0 ? `
+        <div class="services-list">
+          ${system.services.map(s => `
+            <div class="service-item">
+              <span class="service-status ${s.status === 'active' ? 'status-active' : 'status-inactive'}">●</span>
+              <span class="service-name">${escapeHtml(s.label || s.unit)}</span>
+              <span class="service-state">${escapeHtml(s.status || 'unknown')}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<p class="empty-message">无服务信息</p>'}
+    </div>
+
+    <!-- Network Info Card -->
+    <div class="dashboard-card network-card">
+      <div class="card-header">
+        <h3>🌐 网络信息</h3>
+      </div>
+      ${system.lan && system.lan.length > 0 ? `
+        <div class="network-list">
+          ${system.lan.map(n => `
+            <div class="network-item">
+              <span class="network-name">${escapeHtml(n.name)}</span>
+              <code class="network-address">${escapeHtml(n.address)}</code>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<p class="empty-message">无网络信息</p>'}
+    </div>
+
+    <!-- Stats Card -->
+    <div class="dashboard-card stats-card">
+      <div class="card-header">
+        <h3>📊 统计信息</h3>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value">${overview.totalProjects || 0}</div>
+          <div class="stat-label">项目数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">${overview.totalMemories || 0}</div>
+          <div class="stat-label">记忆数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">${recentChats.length}</div>
+          <div class="stat-label">对话数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">${pendingCount}</div>
+          <div class="stat-label">待审批</div>
+        </div>
+      </div>
     </div>
   `;
+
+  // Auto refresh dashboard every 30 seconds
+  if (!window.dashboardRefreshTimer) {
+    window.dashboardRefreshTimer = setInterval(() => {
+      if (document.querySelector('#tab-dashboard.active')) {
+        fetchDashboard();
+      }
+    }, 30000);
+  }
 }
 
 function init() {
