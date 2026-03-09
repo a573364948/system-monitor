@@ -1,106 +1,142 @@
-// ===== WebSocket Connection =====
-let ws = null;
-let wsReconnectTimer = null;
+// ===== Server Configuration =====
+let serverUrl = localStorage.getItem('serverUrl') || 'http://localhost:18489';
+let connectionHistory = JSON.parse(localStorage.getItem('connectionHistory') || '[]');
 
-function initWebSocket() {
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${protocol}//${window.location.host}/ws`;
+function getApiUrl(path) {
+  return `${serverUrl}${path}`;
+}
 
+function saveServerConfig(url) {
+  serverUrl = url;
+  localStorage.setItem('serverUrl', url);
+
+  // Add to history
+  const historyItem = {
+    url,
+    timestamp: new Date().toISOString(),
+  };
+
+  connectionHistory = connectionHistory.filter(item => item.url !== url);
+  connectionHistory.unshift(historyItem);
+  connectionHistory = connectionHistory.slice(0, 10); // Keep last 10
+  localStorage.setItem('connectionHistory', JSON.stringify(connectionHistory));
+}
+
+async function testConnection(url) {
   try {
-    ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      updateConnectionStatus(true);
-
-      // Subscribe to channels
-      ws.send(JSON.stringify({
-        type: 'subscribe',
-        channels: ['permissions', 'alerts', 'chat'],
-      }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        handleWebSocketMessage(data);
-      } catch (error) {
-        console.error('WebSocket message parse error:', error);
-      }
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      updateConnectionStatus(false);
-
-      // Reconnect after 5 seconds
-      wsReconnectTimer = setTimeout(() => {
-        initWebSocket();
-      }, 5000);
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+    const response = await fetch(`${url}/api/health`, {
+      method: 'GET',
+      timeout: 5000,
+    });
+    const data = await response.json();
+    return { ok: data.ok, data };
   } catch (error) {
-    console.error('WebSocket init error:', error);
+    return { ok: false, error: error.message };
   }
 }
 
-function handleWebSocketMessage(data) {
-  switch (data.type) {
-    case 'connected':
-      console.log('WebSocket:', data.message);
-      break;
-    case 'pong':
-      // Handle ping/pong
-      break;
-    case 'permission_update':
-      // Reload permissions if on permissions tab
-      if (document.querySelector('#tab-permissions.active')) {
-        loadPermissions();
-      }
-      showNotification('权限审批', '有新的权限请求需要审批');
-      break;
-    case 'chat_message':
-      // Reload chat if viewing this conversation
-      if (currentChatSession && currentChatSession.sessionId === data.sessionId) {
-        openChat(data.sessionId, data.agentId);
-      }
-      break;
-    case 'alert':
-      showNotification('系统告警', data.message);
-      break;
-    default:
-      console.log('Unknown WebSocket message:', data);
+function showServerConfig() {
+  const modal = $('#serverConfigModal');
+  const urlInput = $('#serverUrl');
+  const statusDiv = $('#connectionStatus');
+
+  urlInput.value = serverUrl;
+  statusDiv.className = 'connection-status';
+  statusDiv.textContent = '';
+
+  renderConnectionHistory();
+  modal.style.display = 'flex';
+}
+
+function hideServerConfig() {
+  $('#serverConfigModal').style.display = 'none';
+}
+
+function renderConnectionHistory() {
+  const list = $('#connectionHistoryList');
+  if (connectionHistory.length === 0) {
+    list.innerHTML = '<p class="muted" style="font-size: 13px;">暂无连接历史</p>';
+    return;
+  }
+
+  list.innerHTML = connectionHistory.map(item => `
+    <div class="connection-history-item" onclick="selectHistoryItem('${escapeHtml(item.url)}')">
+      <div class="url">${escapeHtml(item.url)}</div>
+      <div class="time">${fmtDate(item.timestamp)}</div>
+    </div>
+  `).join('');
+}
+
+function selectHistoryItem(url) {
+  $('#serverUrl').value = url;
+}
+
+async function handleTestConnection() {
+  const url = $('#serverUrl').value.trim();
+  const statusDiv = $('#connectionStatus');
+  const testBtn = $('#testConnectionBtn');
+
+  if (!url) {
+    statusDiv.className = 'connection-status error';
+    statusDiv.textContent = '❌ 请输入服务器地址';
+    return;
+  }
+
+  testBtn.disabled = true;
+  statusDiv.className = 'connection-status testing';
+  statusDiv.textContent = '🔄 正在测试连接...';
+
+  const result = await testConnection(url);
+
+  if (result.ok) {
+    statusDiv.className = 'connection-status success';
+    statusDiv.textContent = `✅ 连接成功! 服务器: ${result.data.host}:${result.data.port}`;
+  } else {
+    statusDiv.className = 'connection-status error';
+    statusDiv.textContent = `❌ 连接失败: ${result.error || '未知错误'}`;
+  }
+
+  testBtn.disabled = false;
+}
+
+async function handleSaveServer() {
+  const url = $('#serverUrl').value.trim();
+  const statusDiv = $('#connectionStatus');
+
+  if (!url) {
+    statusDiv.className = 'connection-status error';
+    statusDiv.textContent = '❌ 请输入服务器地址';
+    return;
+  }
+
+  // Test connection first
+  statusDiv.className = 'connection-status testing';
+  statusDiv.textContent = '🔄 正在验证连接...';
+
+  const result = await testConnection(url);
+
+  if (result.ok) {
+    saveServerConfig(url);
+    statusDiv.className = 'connection-status success';
+    statusDiv.textContent = '✅ 保存成功! 正在刷新...';
+
+    setTimeout(() => {
+      hideServerConfig();
+      location.reload();
+    }, 1000);
+  } else {
+    statusDiv.className = 'connection-status error';
+    statusDiv.textContent = `❌ 无法连接到服务器: ${result.error || '未知错误'}`;
   }
 }
 
-function updateConnectionStatus(connected) {
-  // Update UI to show connection status
-  const statusIndicator = document.querySelector('.connection-indicator');
-  if (statusIndicator) {
-    statusIndicator.classList.toggle('connected', connected);
-    statusIndicator.classList.toggle('disconnected', !connected);
+// Check if server is configured on first load
+function checkServerConfig() {
+  if (!localStorage.getItem('serverUrl')) {
+    // First time user, show config modal
+    setTimeout(() => showServerConfig(), 500);
   }
 }
-
-function showNotification(title, message) {
-  // Simple notification - can be enhanced with browser notifications
-  console.log(`[Notification] ${title}: ${message}`);
-
-  // Try to use browser notifications if permitted
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body: message });
-  }
-}
-
-// Ping WebSocket every 30 seconds to keep alive
-setInterval(() => {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: 'ping' }));
-  }
-}, 30000);
 
 let dashboard = null;
 let query = '';
@@ -309,7 +345,7 @@ async function quickResume(topic) {
   btn.disabled = true;
 
   try {
-    const res = await fetch(`/api/dispatch?topic=${encodeURIComponent(topic)}`, {
+    const res = await fetch(getApiUrl(`/api/dispatch?topic=${encodeURIComponent(topic)}`, {
       method: 'POST',
       cache: 'no-store',
     });
@@ -671,7 +707,7 @@ async function fetchDashboard() {
       showSkeleton();
     }
     
-    const res = await fetch('/api/dashboard', { cache: 'no-store' });
+    const res = await fetch(getApiUrl('/api/dashboard', { cache: 'no-store' });
     dashboard = await res.json();
     renderOverview(dashboard);
     renderQuickLinks(dashboard);
@@ -706,7 +742,7 @@ let currentChatSession = null;
 
 async function loadChatList() {
   try {
-    const res = await fetch('/api/chat/conversations');
+    const res = await fetch(getApiUrl('/api/chat/conversations');
     const data = await res.json();
     if (data.ok) {
       renderChatList(data.conversations);
@@ -741,7 +777,7 @@ async function openChat(sessionId, agentId = 'main') {
   $('#chatDetail').style.display = 'block';
 
   try {
-    const res = await fetch(`/api/chat/conversations/${sessionId}?agent=${agentId}`);
+    const res = await fetch(getApiUrl(`/api/chat/conversations/${sessionId}?agent=${agentId}`);
     const data = await res.json();
     if (data.ok) {
       renderChatMessages(data.messages);
@@ -776,7 +812,7 @@ async function sendChatMessage() {
   btn.textContent = '发送中...';
 
   try {
-    const res = await fetch(`/api/chat/conversations/${currentChatSession.sessionId}/message`, {
+    const res = await fetch(getApiUrl(`/api/chat/conversations/${currentChatSession.sessionId}/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -805,7 +841,7 @@ async function createNewChat() {
   if (!message) return;
 
   try {
-    const res = await fetch('/api/chat/conversations', {
+    const res = await fetch(getApiUrl('/api/chat/conversations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, agentId: 'main' }),
@@ -826,7 +862,7 @@ async function createNewChat() {
 // ===== Permissions Functions =====
 async function loadPermissions() {
   try {
-    const res = await fetch('/api/chat/pending-permissions');
+    const res = await fetch(getApiUrl('/api/chat/pending-permissions');
     const data = await res.json();
     if (data.ok) {
       renderPermissions(data.permissions);
@@ -857,7 +893,7 @@ function renderPermissions(permissions) {
 
 async function approvePermission(permissionId) {
   try {
-    const res = await fetch(`/api/chat/permissions/${permissionId}/approve`, {
+    const res = await fetch(getApiUrl(`/api/chat/permissions/${permissionId}/approve`, {
       method: 'POST',
     });
     const data = await res.json();
@@ -870,7 +906,7 @@ async function approvePermission(permissionId) {
 
 async function rejectPermission(permissionId) {
   try {
-    const res = await fetch(`/api/chat/permissions/${permissionId}/reject`, {
+    const res = await fetch(getApiUrl(`/api/chat/permissions/${permissionId}/reject`, {
       method: 'POST',
     });
     const data = await res.json();
@@ -884,7 +920,7 @@ async function rejectPermission(permissionId) {
 // ===== Share Functions =====
 async function loadShareHistory() {
   try {
-    const res = await fetch('/api/share/history');
+    const res = await fetch(getApiUrl('/api/share/history');
     const data = await res.json();
     if (data.ok) {
       renderShareHistory(data.history);
@@ -926,7 +962,7 @@ function renderShareHistory(history) {
 // ===== Commands Functions =====
 async function loadCommands() {
   try {
-    const res = await fetch('/api/control/commands');
+    const res = await fetch(getApiUrl('/api/control/commands');
     const data = await res.json();
     if (data.ok) {
       renderCommands(data.commands);
@@ -958,7 +994,7 @@ async function executeCommand(commandId) {
   if (!confirm('确定要执行此命令吗?')) return;
 
   try {
-    const res = await fetch('/api/control/command/execute', {
+    const res = await fetch(getApiUrl('/api/control/command/execute', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ commandId }),
@@ -1002,25 +1038,6 @@ function renderDashboard(data) {
 }
 
 function init() {
-  // Register Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then((registration) => {
-        console.log('Service Worker registered:', registration);
-      })
-      .catch((error) => {
-        console.error('Service Worker registration failed:', error);
-      });
-  }
-
-  // Initialize WebSocket
-  initWebSocket();
-
-  // Request notification permission
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-
   syncTopicFromHash();
   fetchDashboard();
 

@@ -11,6 +11,7 @@ const { createConversation, sendMessage, listConversations, getConversationHisto
 const { getPendingPermissions, getAllowlist, approvePermission, rejectPermission } = require('./modules/permission-manager');
 const { handleSharedLink, handleSharedText, handleSharedFile, getShareHistory } = require('./modules/share-handler');
 const { getConfig } = require('./modules/config-manager');
+const { initWebSocket, broadcast } = require('./modules/websocket-manager');
 
 const PORT = Number(process.env.MEMORY_COCKPIT_PORT || 18489);
 const HOST = process.env.MEMORY_COCKPIT_HOST || '0.0.0.0';
@@ -781,4 +782,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`memory-cockpit listening on http://${HOST}:${PORT}`);
+
+  // Initialize WebSocket
+  initWebSocket(server);
 });

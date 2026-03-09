@@ -56,8 +56,20 @@
       <div class="pill" id="projectCountPill">0 个项目</div>
     </section>
 
+    <section class="hero-grid" id="overviewCards"></section>
 
+    <section class="quick-links" id="quickLinks"></section>
 
+    <section class="search-panel">
+      <input id="searchInput" type="search" placeholder="🔍 搜索项目、记忆、主题...">
+      <div class="filter-row" id="filterRow" style="display: none;">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="active">活跃</button>
+        <button class="filter-btn" data-filter="validating">验证中</button>
+        <button class="filter-btn" data-filter="designing">设计中</button>
+        <button class="filter-btn" data-filter="ready">就绪</button>
+      </div>
+    </section>
 
     <nav class="tabbar">
       <button class="tab active" data-tab="dashboard">仪表盘</button>
@@ -112,21 +124,6 @@
           <h2>项目与主题</h2>
           <span id="projectCount"></span>
         </div>
-
-        <section class="hero-grid" id="overviewCards"></section>
-        <section class="quick-links" id="quickLinks"></section>
-
-        <section class="search-panel">
-          <input id="searchInput" type="search" placeholder="🔍 搜索项目、记忆、主题...">
-          <div class="filter-row" id="filterRow" style="display: none;">
-            <button class="filter-btn active" data-filter="all">全部</button>
-            <button class="filter-btn" data-filter="active">活跃</button>
-            <button class="filter-btn" data-filter="validating">验证中</button>
-            <button class="filter-btn" data-filter="designing">设计中</button>
-            <button class="filter-btn" data-filter="ready">就绪</button>
-          </div>
-        </section>
-
         <div id="projectsList" class="card-list two-col"></div>
         <div id="projectDetail"></div>
         <div id="actionResult"></div>
