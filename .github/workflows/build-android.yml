@@ -40,7 +40,9 @@ jobs:
     - name: Initialize Capacitor
       run: |
         if [ ! -d "android" ]; then
-          npx cap init "System Monitor" "com.deck.systemmonitor" --web-dir=public
+          if [ ! -f "capacitor.config.js" ] && [ ! -f "capacitor.config.json" ]; then
+            npx cap init "System Monitor" "com.deck.systemmonitor" --web-dir=public
+          fi
           npx cap add android
         fi
 
